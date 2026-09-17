@@ -415,7 +415,6 @@ The final integrity audit confirms:
 ---
 ## 14. Project Structure
 
-## 14. Project Structure
 
 ```text
 hiver-sde-assignment/
