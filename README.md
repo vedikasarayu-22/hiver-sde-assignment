@@ -415,7 +415,9 @@ The final integrity audit confirms:
 ---
 ## 14. Project Structure
 
+## 14. Project Structure
 
+```text
 hiver-sde-assignment/
 |
 |-- README.md
@@ -435,7 +437,7 @@ hiver-sde-assignment/
 |   |-- evaluator.py
 |   |-- intent_classifier.py
 |   |-- llm_judge.py
-|   |-- retriever.py
+|   `-- retriever.py
 |
 |-- scripts/
 |   |-- extract_intent_guide.py
@@ -443,7 +445,7 @@ hiver-sde-assignment/
 |   |-- review_golden_set.py
 |   |-- show_golden_set_preview.py
 |   |-- test_judge_10_examples.py
-|   |-- validate_workflow.py
+|   `-- validate_workflow.py
 |
 |-- data/
 |   |-- applesupport_tweets.csv
@@ -452,4 +454,6 @@ hiver-sde-assignment/
 |   |-- candidate_golden_set.csv
 |   |-- human_review.csv
 |   |-- human_verified_golden_set.csv
-|   |-- benchmark_results.csv
+|   `-- benchmark_results.csv
+|
+`-- .github/
