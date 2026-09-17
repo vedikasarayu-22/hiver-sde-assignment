@@ -40,8 +40,9 @@ Candidate labels were generated initially, followed by manual review of all 200 
 
 The final verified set is stored at:
 
+```text
 data/human_verified_golden_set.csv
-
+```
 
 Each reviewed example contains:
 
@@ -78,56 +79,56 @@ Some customer queries contain signals for multiple categories. Deterministic pri
 
 The system follows a retrieval-augmented pipeline combining intent classification, historical-case retrieval, grounded response generation, and rule-based escalation.
 
-
+```text
                          Customer Tweet
                               |
                               v
-                   +----------------------+
-                   | Preprocessing         |
-                   | Text cleanup          |
-                   +----------+-----------+
-                              |
-              +---------------+---------------+
-              |                               |
-              v                               v
-     +-------------------+          +----------------------+
-     | Intent            |          | Historical Retrieval |
-     | Classification    |          | TF-IDF / Cosine      |
-     | Rules + Priority  |          | Top-K similar cases  |
-     +---------+---------+          +----------+-----------+
-              |                               |
-              +---------------+---------------+
-                              |
-                              v
-                  +------------------------+
-                  | Historical Resolutions |
-                  | Used as Evidence       |
-                  +-----------+------------+
-                              |
-                              v
-                  +------------------------+
-                  | Grounded Response      |
-                  | Generation              |
-                  +-----------+------------+
-                              |
-                              v
-                  +------------------------+
-                  | Escalation Engine      |
-                  | Rules + Safety Checks  |
-                  +-----------+------------+
-                              |
-                              v
-                  +------------------------+
-                  | Final Response         |
-                  | Auto-handle / Escalate|
-                  +-----------+------------+
-                              |
-                              v
-                  +------------------------+
-                  | Evaluation Harness     |
-                  | Metrics + LLM Judge    |
-                  +------------------------+
-
+                    +----------------------+
+                    | Preprocessing        |
+                    | Text cleanup         |
+                    +----------+-----------+
+                               |
+                 +-------------+-------------+
+                 |                           |
+                 v                           v
+        +-------------------+       +----------------------+
+        | Intent            |       | Historical Retrieval |
+        | Classification    |       | TF-IDF / Cosine      |
+        | Rules + Priority  |       | Top-K similar cases  |
+        +---------+---------+       +----------+-----------+
+                 |                            |
+                 +-------------+--------------+
+                               |
+                               v
+                    +------------------------+
+                    | Historical Resolutions |
+                    | Used as Evidence       |
+                    +-----------+------------+
+                                |
+                                v
+                    +------------------------+
+                    | Grounded Response      |
+                    | Generation              |
+                    +-----------+------------+
+                                |
+                                v
+                    +------------------------+
+                    | Escalation Engine      |
+                    | Rules + Safety Checks  |
+                    +-----------+------------+
+                                |
+                                v
+                    +------------------------+
+                    | Final Response         |
+                    | Auto-handle / Escalate |
+                    +-----------+------------+
+                                |
+                                v
+                    +------------------------+
+                    | Evaluation Harness     |
+                    | Metrics + LLM Judge    |
+                    +------------------------+
+```
 
 ### Pipeline Components
 
@@ -214,7 +215,17 @@ Therefore, the results are presented as **metric trade-offs rather than an overa
 
 ## 7. LLM-as-Judge
 
-The primary response-quality evaluation uses a rubric with four dimensions, each scored from 1 to 5.
+The primary response-quality evaluation uses an LLM-as-Judge rubric with four dimensions, each scored from 1 to 5.
+
+### Judge Model
+
+The current real API-backed judge uses:
+
+**Gemini 2.5 Flash**
+
+through Google's OpenAI-compatible API.
+
+The judge can also fall back to the local rubric implementation when no working API response is available. The reported Gemini audit was run with the Gemini API configured.
 
 ### Evaluation Criteria
 
@@ -234,21 +245,55 @@ The primary response-quality evaluation uses a rubric with four dimensions, each
 
    Whether the response avoids unsupported guarantees, unsafe instructions and inappropriate requests for credentials or sensitive information.
 
-The judge receives the customer query, generated response and retrieved historical evidence.
+The judge receives:
+
+- Customer query
+- Generated response
+- Retrieved historical evidence
 
 The evaluation prompt does not expose model identity, baseline identity, predicted intent or gold intent.
 
 Generic boilerplate without supporting evidence is explicitly prevented from receiving a high groundedness or correctness score merely because it contains support-oriented language.
 
+### 10-Example Judge Audit
+
+A separate 10-example audit was used to verify judge behavior against the trivial boilerplate baseline.
+
+| Agent | Groundedness | Correctness | Overall |
+|---|---:|---:|---:|
+| Baseline 1 - Boilerplate | 2.00 | 2.60 | 3.68 |
+| Main Agent - Grounded RAG | 4.60 | 4.80 | 4.64 |
+
+The audit confirmed that generic boilerplate responses without evidence were not automatically given high groundedness or correctness scores.
+
 ### Human vs. LLM-as-Judge Agreement
 
-Human review in this project covers **intent and escalation labels**, not 1-5 response-quality ratings.
+A 30-example response-quality review subset was evaluated across groundedness, correctness, tone and safety. Agreement was measured using exact agreement, agreement within ±1, and mean absolute error (MAE).
 
-Therefore, a human-vs-LLM response-quality agreement statistic was **not computed**.
+| Dimension | Exact Agreement | Within ±1 | MAE |
+|---|---:|---:|---:|
+| Groundedness | 80.0% | 83.3% | 0.50 |
+| Correctness | 13.3% | 46.7% | 1.70 |
+| Tone | 96.7% | 100.0% | 0.03 |
+| Safety | 96.7% | 100.0% | 0.03 |
 
-No fabricated or hard-coded human ratings are used.
+This 30-example audit is a small supporting judge-validation sample rather than a production-level estimate.
 
-This is an explicit limitation of the current evaluation and is preferable to reporting an unsupported agreement statistic.
+Correctness shows substantially more disagreement than the other dimensions, suggesting that deciding whether a response fully resolves a customer's issue is more subjective than judging tone or basic safety.
+
+The agreement outputs are stored at:
+
+```text
+data/human_llm_agreement_results.csv
+data/human_llm_agreement_summary.csv
+```
+
+The 30-case input/review material is stored at:
+
+```text
+data/human_agreement_30.csv
+data/human_agreement_cases.csv
+```
 
 ---
 
@@ -341,7 +386,7 @@ The dataset contains repetitive support language and the taxonomy is specific to
 1. Selected `@AppleSupport` because of the volume and technical troubleshooting content available in the dataset.
 2. Used initial customer tweets as the starting point for support-resolution pairing.
 3. Paired inbound customer queries with corresponding historical brand responses.
-4. Created a separate candidate golden set before human verification.
+4. Created a separate candidate golden set before verification.
 5. Manually verified all 200 golden-set examples.
 6. Used an 8-category taxonomy after empirical overlap analysis.
 7. Excluded all 200 evaluation tweet IDs from the retrieval index.
@@ -352,7 +397,7 @@ The dataset contains repetitive support language and the taxonomy is specific to
 12. Used an LLM-as-Judge rubric rather than relying only on lexical overlap.
 13. Added a strict rule preventing generic boilerplate from receiving high groundedness/correctness scores without evidence.
 14. Kept ROUGE as a supporting metric rather than the primary response-quality measure.
-15. Did not fabricate human-vs-LLM agreement statistics when the human review data did not contain matching 1-5 response-quality ratings.
+15. Added a separate 30-case judge-validation workflow to quantify agreement and identify rubric dimensions with higher disagreement.
 
 ---
 
@@ -370,19 +415,51 @@ python run_pipeline.py
 
 The final evaluation pipeline is lightweight and the benchmark runtime is approximately 10-15 seconds after the required data and retrieval index are prepared.
 
+### LLM Judge
+
+For the real Gemini-backed judge, configure:
+
+```bash
+GEMINI_API_KEY=<your key>
+```
+
+Do not commit API keys to the repository.
+
+The judge uses Gemini 2.5 Flash through Google's OpenAI-compatible endpoint.
+
+### Human–LLM Judge Audit
+
+The 30-case judge-validation workflow can be reproduced with:
+
+```bash
+python scripts/generate_human_agreement_cases.py
+python scripts/run_human_agreement.py
+```
+
+The resulting outputs are:
+
+```text
+data/human_llm_agreement_results.csv
+data/human_llm_agreement_summary.csv
+```
+
 ### Final Evaluation Data
 
+```text
 data/human_verified_golden_set.csv
-
+```
 
 ### Final Benchmark Output
 
+```text
 data/benchmark_results.csv
+```
 
 ### Retrieval Index
 
+```text
 data/apple_retrieval_index.csv
-
+```
 
 ### Integrity Checks
 
@@ -408,13 +485,13 @@ The final integrity audit confirms:
 3. Add multilingual query handling.
 4. Add structured output validation for generated responses.
 5. Add multi-turn conversation memory.
-6. Build a larger, independently reviewed response-quality evaluation subset with human 1-5 ratings so human-vs-LLM judge agreement can be measured directly.
+6. Expand the independently reviewed response-quality evaluation subset with human 1-5 ratings so human-vs-LLM judge agreement can be measured more robustly.
 7. Evaluate on temporally separated data to test robustness to changing product and software issues.
 8. Integrate the agent with a production support workflow such as a ticketing or customer-support system.
 
 ---
-## 14. Project Structure
 
+## 14. Project Structure
 
 ```text
 hiver-sde-assignment/
@@ -444,7 +521,10 @@ hiver-sde-assignment/
 |   |-- review_golden_set.py
 |   |-- show_golden_set_preview.py
 |   |-- test_judge_10_examples.py
-|   `-- validate_workflow.py
+|   |-- validate_workflow.py
+|   |-- prepare_human_agreement.py
+|   |-- generate_human_agreement_cases.py
+|   `-- run_human_agreement.py
 |
 |-- data/
 |   |-- applesupport_tweets.csv
@@ -453,6 +533,29 @@ hiver-sde-assignment/
 |   |-- candidate_golden_set.csv
 |   |-- human_review.csv
 |   |-- human_verified_golden_set.csv
-|   `-- benchmark_results.csv
+|   |-- benchmark_results.csv
+|   |-- human_agreement_30.csv
+|   |-- human_agreement_cases.csv
+|   |-- human_llm_agreement_results.csv
+|   `-- human_llm_agreement_summary.csv
 |
 `-- .github/
+```
+
+---
+
+## Conclusion
+
+This project focuses not only on building an AI support agent, but also on evaluating whether the system is trustworthy.
+
+The evaluation deliberately separates:
+
+- Intent classification quality
+- Escalation quality
+- Historical grounding
+- Response correctness
+- Tone
+- Safety
+- Lexical similarity
+
+The benchmark shows meaningful trade-offs between the main RAG agent and simpler baselines, while the judge audit provides additional evidence about the behavior of the response-quality evaluation.
