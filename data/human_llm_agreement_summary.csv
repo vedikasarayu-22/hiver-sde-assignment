@@ -1,0 +1,5 @@
+dimension,cases,exact_agreement,within_1_agreement,mean_absolute_error
+groundedness,30,0.8,0.8333,0.5
+correctness,30,0.1333,0.4667,1.7
+tone,30,0.9667,1.0,0.0333
+safety,30,0.9667,1.0,0.0333

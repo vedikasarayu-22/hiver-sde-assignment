@@ -49,7 +49,7 @@ class EvaluationHarness:
     customer_text,
     draft,
     output.get('retrieved_contexts', []),
-    ref_reply
+    None
 )
             judge_scores.append(j_eval)
 
