@@ -413,27 +413,43 @@ The final integrity audit confirms:
 8. Integrate the agent with a production support workflow such as a ticketing or customer-support system.
 
 ---
-
 ## 14. Project Structure
 
 
-.
+hiver-sde-assignment/
+|
+|-- README.md
+|-- .gitignore
 |-- run_pipeline.py
 |-- download_dataset.py
 |-- explore_apple_data.py
 |-- prepare_golden_candidate_set.py
-|-- src
+|-- app_review.py
+|-- audit_evaluation.py
+|-- review_cli.py
+|
+|-- src/
 |   |-- agent.py
 |   |-- cache.py
 |   |-- config.py
 |   |-- evaluator.py
-|   `-- llm_judge.py
-|-- data
+|   |-- intent_classifier.py
+|   |-- llm_judge.py
+|   |-- retriever.py
+|
+|-- scripts/
+|   |-- extract_intent_guide.py
+|   |-- final_integrity_check.py
+|   |-- review_golden_set.py
+|   |-- show_golden_set_preview.py
+|   |-- test_judge_10_examples.py
+|   |-- validate_workflow.py
+|
+|-- data/
 |   |-- applesupport_tweets.csv
 |   |-- apple_resolution_pairs.csv
 |   |-- apple_retrieval_index.csv
 |   |-- candidate_golden_set.csv
 |   |-- human_review.csv
 |   |-- human_verified_golden_set.csv
-|   `-- benchmark_results.csv
-`-- README.md
+|   |-- benchmark_results.csv
